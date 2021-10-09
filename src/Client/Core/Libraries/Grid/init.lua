@@ -8,7 +8,7 @@ function Grid.new(gridDimensions: Vector2, bombCount: number, randomSeed: number
 	assert(typeof(bombCount) == "number", "Argument #2 expected Number. Got " .. typeof(bombCount))
 	assert(typeof(randomSeed) == "nil" or typeof(randomSeed) == "number", "Argument #3 expected Number. Got " .. typeof(randomSeed))
 	assert(gridDimensions.X * gridDimensions.Y > bombCount, "Number of bombs must be less than total grid area.")
-	
+
 	-- Creating the new object.
 	local self = setmetatable({
 		BombCount = bombCount,
@@ -16,7 +16,7 @@ function Grid.new(gridDimensions: Vector2, bombCount: number, randomSeed: number
 		FlagCount = 0,
 		Grid = {},
 		IsLocked = false,
-		
+
 		CellMined = Instance.new("BindableEvent"),
 		GameFinished = Instance.new("BindableEvent"),
 		FlagCountUpdated = Instance.new("BindableEvent")
@@ -37,17 +37,16 @@ function Grid.new(gridDimensions: Vector2, bombCount: number, randomSeed: number
 			return outputString:sub(1, -2)
 		end,
 	})
-	
+
 	-- Object setup.
 	self:_GenerateGrid(randomSeed)
-	
+
 	self.CellMined.Event:Connect(function(cellType: Cell.CellType)
-		
+
 		if cellType.Name == Cell.CELL_TYPES.BOMB.Name then
 			self.IsLocked = true
 			self.GameFinished:Fire(false)
 		else
-			
 			-- We want to see if they've just won.
 			for rowNumber = 1, self.Dimensions.Y do
 				for collumnNumber = 1, self.Dimensions.X do
@@ -56,12 +55,12 @@ function Grid.new(gridDimensions: Vector2, bombCount: number, randomSeed: number
 					end
 				end
 			end
-			
+
 			self.IsLocked = true
 			self.GameFinished:Fire(true)
 		end
 	end)
-	
+
 	--
 	return self
 end
@@ -70,14 +69,14 @@ end
 function Grid:Destroy()
 	self.CellMined:Destroy()
 	self.GameFinished:Destroy()
-	self.FlagCountUpdated:Destroy()	
-	
+	self.FlagCountUpdated:Destroy()
+
 	for rowNumber = 1, self.Dimensions.Y do
 		for collumnNumber = 1, self.Dimensions.X do
 			self.Grid[rowNumber][collumnNumber]:Destroy()
 		end
 	end
-	
+
 	self.Grid = nil
 end
 
@@ -115,37 +114,37 @@ end
 
 function Grid:GenerateGui(parent: Instance?) : {TextButton}
 	assert(typeof(parent) == "nil" or typeof(parent) == "Instance", "Argument #1 expected Instance. Got " .. typeof(parent))
-	
+
 	local guiElements = {}
-	
+
 	-- Creating the TextButtons.
 	for rowNumber = 1, self.Dimensions.Y do
 		for collumnNumber = 1, self.Dimensions.X do
 			table.insert(
-				guiElements, 
+				guiElements,
 				self.Grid[rowNumber][collumnNumber]:GenerateGui(parent)
 			)
 		end
 	end
-	
+
 	return guiElements
 end
 
 
-function Grid:PlaceFlagOnCell(cell: Cell) : boolean
+function Grid:PlaceFlagOnCell(cell: Cell.Cell) : boolean
 	assert(typeof(cell) == "table", "Argument #1 expected Cell. Got " .. typeof(cell))
 	assert(self:_IsLocationWithinGrid(cell.Location), "Cell out of bounds, bounds = [" .. tostring(self.Dimensions) .. "]. Got [" .. tostring(cell.Location) .. "]")
-	
+
 	-- Does this cell already have a flag?
 	-- If so we want to remove the flag.
 	if cell.IsFlagged then
 		self.FlagCount -= 1
 		cell.IsFlagged = false
 		self.FlagCountUpdated:Fire(self.FlagCount)
-		
+
 		return false
 	end
-	
+
 	-- Can we place this flag?
 	if self.FlagCount == self.BombCount then
 		return false
@@ -153,7 +152,7 @@ function Grid:PlaceFlagOnCell(cell: Cell) : boolean
 		self.FlagCount += 1
 		cell.IsFlagged = true
 		self.FlagCountUpdated:Fire(self.FlagCount)
-		
+
 		return true
 	end
 end
@@ -161,24 +160,24 @@ end
 -- Private Methods
 function Grid:_GenerateGrid(randomSeed: number?)
 	assert(typeof(randomSeed) == "nil" or typeof(randomSeed) == "number", "Argument #1 expected Number. Got " .. typeof(randomSeed))
-	
+
 	local numberOfBombsGenerated = 0
 	local rawBombGenerationOdds = self.BombCount / (self.Dimensions.X * self.Dimensions.Y)
 	local randomInstance = Random.new(randomSeed or os.clock())
-	
+
 	-- On the first pass we don't check for border cells.
 	for rowNumber = 1, self.Dimensions.Y do
 		for collumnNumber = 1, self.Dimensions.X do
 			self.Grid[rowNumber] = self.Grid[rowNumber] or {}
-			
+
 			-- Should we even try to generate a bomb?
 			if numberOfBombsGenerated < self.BombCount then
 				local numberOfTilesLeft = (self.Dimensions.Y - rowNumber) * self.Dimensions.X + (self.Dimensions.X - collumnNumber + 1)
-				
+
 				-- If the odds say so or we're forced to we make a bomb.
 				if randomInstance:NextNumber() <= rawBombGenerationOdds or numberOfTilesLeft == (self.BombCount - numberOfBombsGenerated) then
 					numberOfBombsGenerated += 1
-					
+
 					self.Grid[rowNumber][collumnNumber] = Cell.new(
 						self,
 						Vector2.new(collumnNumber, rowNumber),
@@ -200,14 +199,14 @@ function Grid:_GenerateGrid(randomSeed: number?)
 			end
 		end
 	end
-	
+
 	-- On the second pass we do check for border cells.
 	for rowNumber = 1, self.Dimensions.Y do
 		for collumnNumber = 1, self.Dimensions.X do
 			if self.Grid[rowNumber][collumnNumber]:Is(Cell.CELL_TYPES.EMPTY) then
-				
+
 				local numberOfBombsNearCell = 0
-				
+
 				-- Getting the number of bombs around this cell.
 				for neighborRowNumber = rowNumber - 1, rowNumber + 1 do
 					for neighborCollumnNumber = collumnNumber - 1, collumnNumber + 1 do
@@ -216,7 +215,7 @@ function Grid:_GenerateGrid(randomSeed: number?)
 						end
 					end
 				end
-				
+
 				if numberOfBombsNearCell > 0 then
 					self.Grid[rowNumber][collumnNumber] = Cell.new(
 						self,
@@ -233,19 +232,19 @@ end
 
 function Grid:_GetNeighborCell(cell: Cell.Cell, stepVector: Vector2) : Cell.Cell?
 	assert(typeof(cell) == "table", "Argument #1 expected Cell. Got " .. typeof(cell))
-	assert(typeof(stepVector) == "Vector2", "Argument #2 expected Vector2. Got " .. typeof(stepVector))	
-	
+	assert(typeof(stepVector) == "Vector2", "Argument #2 expected Vector2. Got " .. typeof(stepVector))
+
 	if not self:_IsLocationWithinGrid(Vector2.new(cell.Location.X + stepVector.X, cell.Location.Y + stepVector.Y)) then
 		return
 	end
-	
+
 	return self.Grid[cell.Location.Y + stepVector.Y][cell.Location.X + stepVector.X]
 end
 
 
 function Grid:_IsLocationWithinGrid(location: Vector2) : boolean
 	assert(typeof(location) == "Vector2", "Argument #1 expected Vector2. Got " .. typeof(location))
-	
+
 	return (location.X > 0 and location.X <= self.Dimensions.X) and (location.Y > 0 and location.Y <= self.Dimensions.Y)
 end
 

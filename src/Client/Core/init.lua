@@ -7,8 +7,9 @@ function coreModule.Initialize()
     coreModule.Debug("[Core]: Loading "..script.Parent.Name..".")
 
     -- Loading Modules.
+    coreModule.LoadModule("Modules.CoreGuiSetup")
     coreModule.LoadModule("Modules.StateManager")
-    
+
     coreModule.Debug("[Core]: Done loading "..script.Parent.Name..".")
 end
 

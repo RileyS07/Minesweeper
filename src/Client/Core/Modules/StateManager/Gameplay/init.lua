@@ -6,46 +6,43 @@ gameplayState.Connections = {}
 gameplayState.Grid = nil
 gameplayState.DifficultyInformation = nil
 
-
-local stateManager = require(script.Parent)
-local tweenService = game:GetService("TweenService")
 local coreModule = require(script:FindFirstAncestor("Core"))
+local stateManager = require(coreModule.GetObject("Modules.StateManager"))
+local difficulities = require(coreModule.GetObject("/Difficulties"))
 local Grid = require(coreModule.GetObject("Libraries.Grid"))
-local sounds = coreModule.GetObject("//Assets.Sounds")
-local difficulities = require(script.Difficulties)
 
 -- State Methods
 function gameplayState.StateStarted()
 	gameplayState.Interface = coreModule.GetObject("//Assets.Interfaces." .. script.Name):Clone()
 	gameplayState.Interface.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
-	tweenService:Create(sounds.Music[script.Name], TweenInfo.new(0.25, Enum.EasingStyle.Linear), {Volume = 0.5}):Play()
-	
+	game:GetService("TweenService"):Create(coreModule.GetObject("//Assets.Sounds.Music." .. script.Name), TweenInfo.new(0.25, Enum.EasingStyle.Linear), {Volume = 0.5}):Play()
+
 	-- gameplayState.DifficultyInformation hasn't been set yet.
 	if not gameplayState.DifficultyInformation then
-		gameplayState.DifficultyInformation = difficulities.EXPERT
+		gameplayState.DifficultyInformation = difficulities.BEGINNER
 	end
-	
+
 	-- Gameplay loop.
 	task.defer(function()
 		while gameplayState.IsActive do
 			gameplayState.Grid = Grid.new(gameplayState.DifficultyInformation.GRID_SIZE, gameplayState.DifficultyInformation.BOMB_COUNT)
 			print("\n" .. tostring(gameplayState.Grid))
-			
+
 			-- Setup.
 			gameplayState.SetupTimer()
 			gameplayState.SetupFlagCounter()
 			gameplayState.Interface.Container.Content.UIGridLayout.CellSize = UDim2.fromScale(1 / gameplayState.DifficultyInformation.GRID_SIZE.X, 1 / gameplayState.DifficultyInformation.GRID_SIZE.Y)
 			gameplayState.Interface.Container.UIAspectRatioConstraint.AspectRatio = gameplayState.DifficultyInformation.GRID_SIZE.X / gameplayState.DifficultyInformation.GRID_SIZE.Y
 			gameplayState.Grid:GenerateGui(gameplayState.Interface.Container.Content)
-			
+
 			-- Waiting till it's finished and what we do after.
 			local finishedSuccessfully = gameplayState.Grid.GameFinished.Event:Wait()
 			gameplayState.DisconnectListeners()
 
-			local correctSound = finishedSuccessfully and sounds.Win or sounds.Lose
+			local correctSound = coreModule.GetObject("//Assets.Sounds.Music." .. (finishedSuccessfully and "GameWin" or "GameFailure"))
 			correctSound:Play()
 			correctSound.Ended:Wait()
-			
+
 			stateManager.ChangeState(stateManager.STATES.MENU)
 		end
 	end)
@@ -56,13 +53,13 @@ function gameplayState.StateFinished()
 	if gameplayState.Interface then
 		gameplayState.Interface:Destroy()
 	end
-	
+
 	if gameplayState.Grid then
 		gameplayState.Grid:Destroy()
 	end
-	
+
 	gameplayState.DisconnectListeners()
-	tweenService:Create(sounds.Music[script.Name], TweenInfo.new(0.25, Enum.EasingStyle.Linear), {Volume = 0}):Play()
+	game:GetService("TweenService"):Create(coreModule.GetObject("//Assets.Sounds.Music." .. script.Name), TweenInfo.new(0.25, Enum.EasingStyle.Linear), {Volume = 0}):Play()
 end
 
 -- Private Methods
@@ -80,7 +77,7 @@ function gameplayState.SetupTimer()
 
 	gameplayState.Connections.Timer = game:GetService("RunService").Heartbeat:Connect(function()
 		local rawSeconds = math.floor(os.clock()) - startTime
-		
+
 		gameplayState.Interface.Container.Header.Counter_Time.Text = "⏰ " .. string.format("%d:%.02d", math.floor(rawSeconds / 60), rawSeconds % 60)
 	end)
 end

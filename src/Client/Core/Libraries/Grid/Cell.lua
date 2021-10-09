@@ -25,7 +25,6 @@ Cell.COLOR_SCHEMES = {
 }
 
 local coreModule = require(script:FindFirstAncestor("Core"))
-local sounds = coreModule.GetObject("//Assets.Sounds")
 
 -- Constructor
 function Cell.new(grid: {any}, location: Vector2, cellType: CellType, bombsNearby: number?)
@@ -33,7 +32,7 @@ function Cell.new(grid: {any}, location: Vector2, cellType: CellType, bombsNearb
 	assert(typeof(location) == "Vector2", "Argument #2 expected Vector2. Got " .. typeof(location))
 	assert(typeof(cellType) == "table", "Argument #3 expected number. Got " .. typeof(cellType))
 	assert(typeof(bombsNearby) == "nil" or typeof(bombsNearby) == "number", "Argument #4 expected number. Got " .. typeof(bombsNearby))
-	
+
 	return setmetatable({
 		BombsNearby = bombsNearby or 0,
 		CellType = cellType,
@@ -48,7 +47,7 @@ function Cell.new(grid: {any}, location: Vector2, cellType: CellType, bombsNearb
 		__tostring = function(self)
 			return cellType.Symbol .. " " .. cellType.Name .. " [" .. tostring(self.Location.X) .. ", " .. tostring(self.Location.Y) .. "]"
 		end,
-	})	
+	})
 end
 
 -- Public Methods
@@ -66,11 +65,11 @@ end
 
 function Cell:Reveal()
 	assert(self._TextButton ~= nil, "Cannot reveal cell without generating it first.")
-	
+
 	local currentCellValue = ((self.Location.Y - 1) * self.Grid.Dimensions.X + self.Location.X + self.Location.Y)
 	self._TextButton.BackgroundColor3 = Cell.COLOR_SCHEMES.REVEALED[(self.Grid.Dimensions.X % 2 == 1 and currentCellValue - self.Location.Y or currentCellValue) % 2 + 1]
 	self.IsRevealed = true
-	
+
 	-- What do we do?
 	if self:Is(Cell.CELL_TYPES.BORDER) then
 		self._TextButton.TextColor3 = Cell.COLOR_SCHEMES.BORDER_CELL_TEXT_COLOR[math.min(self.BombsNearby, #Cell.COLOR_SCHEMES.BORDER_CELL_TEXT_COLOR)]
@@ -83,7 +82,7 @@ end
 
 function Cell:GenerateGui(parent: Instance?) : TextButton
 	assert(typeof(parent) == "nil" or typeof(parent) == "Instance", "Argument #1 expected Instance. Got " .. typeof(parent))
-	
+
 	local currentCellValue = ((self.Location.Y - 1) * self.Grid.Dimensions.X + self.Location.X + self.Location.Y)
 	local textButton = Instance.new("TextButton")
 	textButton.BorderSizePixel = 0
@@ -93,21 +92,21 @@ function Cell:GenerateGui(parent: Instance?) : TextButton
 	textButton.TextScaled = true
 	textButton.Text = ""
 	self._TextButton = textButton
-	
+
 	-- For when they click it.
 	textButton.Activated:Connect(function()
 		if self.IsRevealed then return end
 		if self.IsFlagged then return end
 		if self.Grid.IsLocked then return end
-		
+
 		-- We only check for Empty specifically.
 		if self:Is(Cell.CELL_TYPES.EMPTY) then
 			self.Grid:FillEmptyCells(self)
 		else
 			self:Reveal()
 		end
-		
-		sounds.Click:Play()
+
+		coreModule.GetObject("//Assets.Sounds.SoundEffects.Click"):Play()
 		self.Grid.CellMined:Fire(self.CellType)
 	end)
 
@@ -117,7 +116,7 @@ function Cell:GenerateGui(parent: Instance?) : TextButton
 
 		-- Inverting, removing the flag.
 		if self.IsFlagged then
-			sounds.Unflag:Play()
+			coreModule.GetObject("//Assets.Sounds.SoundEffects.Unflag"):Play()
 			textButton.Text = ""
 		end
 
@@ -126,11 +125,11 @@ function Cell:GenerateGui(parent: Instance?) : TextButton
 
 		-- Update
 		if wasSuccessful then
-			sounds.Flag:Play()
+			coreModule.GetObject("//Assets.Sounds.SoundEffects.Flag"):Play()
 			textButton.Text = Cell.CELL_TYPES.FLAG.Symbol
 		end
 	end)
-	
+
 	textButton.Parent = parent
 	return textButton
 end
