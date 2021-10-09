@@ -1,0 +1,33 @@
+
+{
+    "name": "Minesweeper",
+    "tree": {
+        "$className": "DataModel",
+        "$ignoreUnknownInstances": true,
+  
+        "ReplicatedStorage": {
+            "$className": "ReplicatedStorage",
+            "$ignoreUnknownInstances": true,
+  
+            "Client": {
+                "$className": "Folder",
+                "$ignoreUnknownInstances": true,
+                "$path": "src/Client"
+            }
+        },
+  
+        "StarterPlayer": {
+            "$className": "StarterPlayer",
+            "$ignoreUnknownInstances": true,
+  
+            "StarterPlayerScripts": {
+                "$className": "StarterPlayerScripts",
+                "$ignoreUnknownInstances": true,
+          
+                "Bootstrap": {
+                    "$path": "src/Bootstrap_Client"
+                }
+            }
+        }
+    }
+}
