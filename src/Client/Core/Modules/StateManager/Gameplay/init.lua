@@ -37,6 +37,12 @@ function gameplayState.StateStarted()
 
 			-- Waiting till it's finished and what we do after.
 			local finishedSuccessfully = gameplayState.Grid.GameFinished.Event:Wait()
+
+			-- Check if they want to try again?
+			if not finishedSuccessfully then
+				--game:GetService("MarketplaceService"):PromptProductPurchase(game:GetService("Players").LocalPlayer, 1211160859)
+			end
+
 			gameplayState.DisconnectListeners()
 
 			local correctSound = coreModule.GetObject("//Assets.Sounds.Music." .. (finishedSuccessfully and "GameWin" or "GameFailure"))

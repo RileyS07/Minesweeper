@@ -113,7 +113,8 @@ function Cell:GenerateGui(parent: Instance?) : TextButton
 	-- Right click to place a flag.
 	textButton.MouseButton2Click:Connect(function()
 		if self.IsRevealed then return end
-
+		if self.Grid.IsLocked then return end
+		
 		-- Inverting, removing the flag.
 		if self.IsFlagged then
 			coreModule.GetObject("//Assets.Sounds.SoundEffects.Unflag"):Play()
