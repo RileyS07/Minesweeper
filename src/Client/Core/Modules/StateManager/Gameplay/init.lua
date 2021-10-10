@@ -1,5 +1,11 @@
 -- Variables
 local gameplayState = {}
+gameplayState.STATES = {
+	RETRY = "Retry",
+	PLAY_AGAIN = "Play_Again",
+	GO_TO_MENU = "Go_To_Menu"
+}
+
 gameplayState.IsActive = false
 gameplayState.Interface = nil
 gameplayState.Connections = {}
@@ -10,16 +16,16 @@ local coreModule = require(script:FindFirstAncestor("Core"))
 local stateManager = require(coreModule.GetObject("Modules.StateManager"))
 local difficulities = require(coreModule.GetObject("/Difficulties"))
 local Grid = require(coreModule.GetObject("Libraries.Grid"))
+local tweenService = game:GetService("TweenService")
 
 -- State Methods
 function gameplayState.StateStarted()
 	gameplayState.Interface = coreModule.GetObject("//Assets.Interfaces." .. script.Name):Clone()
 	gameplayState.Interface.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
-	game:GetService("TweenService"):Create(coreModule.GetObject("//Assets.Sounds.Music." .. script.Name), TweenInfo.new(0.25, Enum.EasingStyle.Linear), {Volume = 0.5}):Play()
 
 	-- gameplayState.DifficultyInformation hasn't been set yet.
 	if not gameplayState.DifficultyInformation then
-		gameplayState.DifficultyInformation = difficulities.BEGINNER
+		gameplayState.DifficultyInformation = difficulities.EXPERT
 	end
 
 	-- Gameplay loop.
@@ -37,19 +43,50 @@ function gameplayState.StateStarted()
 
 			-- Waiting till it's finished and what we do after.
 			local finishedSuccessfully = gameplayState.Grid.GameFinished.Event:Wait()
-
-			-- Check if they want to try again?
-			if not finishedSuccessfully then
-				--game:GetService("MarketplaceService"):PromptProductPurchase(game:GetService("Players").LocalPlayer, 1211160859)
-			end
-
 			gameplayState.DisconnectListeners()
 
 			local correctSound = coreModule.GetObject("//Assets.Sounds.Music." .. (finishedSuccessfully and "GameWin" or "GameFailure"))
 			correctSound:Play()
-			correctSound.Ended:Wait()
 
-			stateManager.ChangeState(stateManager.STATES.MENU)
+			-- Let's show them game finished menu!
+			tweenService:Create(gameplayState.Interface.Overlay, TweenInfo.new(0.25, Enum.EasingStyle.Linear), {BackgroundTransparency = 0.55}):Play()
+
+			local gameFinishedMenu = gameplayState.Interface.GameFinishedMenu
+			gameFinishedMenu.StatusText.Text = finishedSuccessfully and "You've won!" or "You've lost!"
+			gameFinishedMenu.Position = UDim2.fromScale(0.5, 2)
+			gameFinishedMenu.Visible = true
+
+			local upwardsTweenInstance = tweenService:Create(gameFinishedMenu, TweenInfo.new(0.25, Enum.EasingStyle.Linear), {Position = UDim2.fromScale(0.5, 0.5)})
+			upwardsTweenInstance:Play()
+			upwardsTweenInstance.Completed:Wait()
+
+			-- Let's wait for input.
+			local desiredAction = ""
+
+			gameplayState.Connections.Button1 = gameFinishedMenu.Content.Retry.Activated:Connect(function()
+				desiredAction = gameplayState.STATES.RETRY
+			end)
+
+			gameplayState.Connections.Button2 = gameFinishedMenu.Content.NewGame.Activated:Connect(function()
+				desiredAction = gameplayState.STATES.PLAY_AGAIN
+			end)
+
+			gameplayState.Connections.Button3 = gameFinishedMenu.Content.Return.Activated:Connect(function()
+				desiredAction = gameplayState.STATES.GO_TO_MENU
+			end)
+
+			-- We need to wait till they've given us input.
+			repeat task.wait() until desiredAction ~= ""
+
+			-- Now what do we do?
+			if desiredAction == gameplayState.STATES.PLAY_AGAIN then
+				stateManager.ChangeState(stateManager.STATES.GAMEPLAY)
+				break
+			elseif desiredAction == gameplayState.STATES.GO_TO_MENU then
+				stateManager.ChangeState(stateManager.STATES.MENU)
+			else
+				stateManager.ChangeState(stateManager.STATES.MENU)
+			end
 		end
 	end)
 end
@@ -65,7 +102,6 @@ function gameplayState.StateFinished()
 	end
 
 	gameplayState.DisconnectListeners()
-	game:GetService("TweenService"):Create(coreModule.GetObject("//Assets.Sounds.Music." .. script.Name), TweenInfo.new(0.25, Enum.EasingStyle.Linear), {Volume = 0}):Play()
 end
 
 -- Private Methods

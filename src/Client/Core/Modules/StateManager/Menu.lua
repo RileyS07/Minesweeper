@@ -11,7 +11,6 @@ local stateManager = require(coreModule.GetObject("Modules.StateManager"))
 function menuState.StateStarted()
 	menuState.Interface = coreModule.GetObject("//Assets.Interfaces." .. script.Name):Clone()
 	menuState.Interface.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
-	game:GetService("TweenService"):Create(coreModule.GetObject("//Assets.Sounds.Music." .. script.Name), TweenInfo.new(0.25, Enum.EasingStyle.Linear), {Volume = 0.5}):Play()
 
 	-- They want to play!
 	menuState.Interface.Background.PlayButton.Activated:Connect(function()
@@ -31,8 +30,6 @@ function menuState.StateFinished()
 			connection:Disconnect()
 		end
 	end
-
-	game:GetService("TweenService"):Create(coreModule.GetObject("//Assets.Sounds.Music." .. script.Name), TweenInfo.new(0.25, Enum.EasingStyle.Linear), {Volume = 0}):Play()
 end
 
 --
