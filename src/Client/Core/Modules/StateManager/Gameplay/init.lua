@@ -65,14 +65,17 @@ function gameplayState.StateStarted()
 
 			gameplayState.Connections.Button1 = gameFinishedMenu.Content.Retry.Activated:Connect(function()
 				desiredAction = gameplayState.STATES.RETRY
+				coreModule.GetObject("//Assets.Sounds.SoundEffects.Click"):Play()
 			end)
 
 			gameplayState.Connections.Button2 = gameFinishedMenu.Content.NewGame.Activated:Connect(function()
 				desiredAction = gameplayState.STATES.PLAY_AGAIN
+				coreModule.GetObject("//Assets.Sounds.SoundEffects.Click"):Play()
 			end)
 
 			gameplayState.Connections.Button3 = gameFinishedMenu.Content.Return.Activated:Connect(function()
 				desiredAction = gameplayState.STATES.GO_TO_MENU
+				coreModule.GetObject("//Assets.Sounds.SoundEffects.Click"):Play()
 			end)
 
 			-- We need to wait till they've given us input.

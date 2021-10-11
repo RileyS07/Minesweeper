@@ -12,10 +12,18 @@ function menuState.StateStarted()
 	menuState.Interface = coreModule.GetObject("//Assets.Interfaces." .. script.Name):Clone()
 	menuState.Interface.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
 
-	-- They want to play!
-	menuState.Interface.Background.PlayButton.Activated:Connect(function()
+	-- Yeah we got buttons.
+	menuState.Connections.Button1 = menuState.Interface.Background.Content.Buttons.Settings.Activated:Connect(function()
+		coreModule.GetObject("//Assets.Sounds.SoundEffects.Click"):Play()
+	end)
+
+	menuState.Connections.Button2 = menuState.Interface.Background.Content.Buttons.Play.Activated:Connect(function()
 		coreModule.GetObject("//Assets.Sounds.SoundEffects.Click"):Play()
 		stateManager.ChangeState(stateManager.STATES.GAMEPLAY)
+	end)
+
+	menuState.Connections.Button3 = menuState.Interface.Background.Content.Buttons.Achievements.Activated:Connect(function()
+		coreModule.GetObject("//Assets.Sounds.SoundEffects.Click"):Play()
 	end)
 end
 
