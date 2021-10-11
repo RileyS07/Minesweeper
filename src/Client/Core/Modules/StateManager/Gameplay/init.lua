@@ -86,7 +86,7 @@ function gameplayState.StateStarted()
 				stateManager.ChangeState(stateManager.STATES.GAMEPLAY)
 				break
 			elseif desiredAction == gameplayState.STATES.GO_TO_MENU then
-				stateManager.ChangeState(stateManager.STATES.MENU)
+				stateManager.ChangeState(stateManager.STATES.PLAY_MENU, "Menu")
 			else
 				stateManager.ChangeState(stateManager.STATES.MENU)
 			end

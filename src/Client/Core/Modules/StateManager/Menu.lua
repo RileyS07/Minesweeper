@@ -19,7 +19,7 @@ function menuState.StateStarted()
 
 	menuState.Connections.Button2 = menuState.Interface.Background.Content.Buttons.Play.Activated:Connect(function()
 		coreModule.GetObject("//Assets.Sounds.SoundEffects.Click"):Play()
-		stateManager.ChangeState(stateManager.STATES.GAMEPLAY)
+		stateManager.ChangeState(stateManager.STATES.PLAY_MENU, "Menu")
 	end)
 
 	menuState.Connections.Button3 = menuState.Interface.Background.Content.Buttons.Achievements.Activated:Connect(function()

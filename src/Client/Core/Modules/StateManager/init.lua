@@ -1,7 +1,8 @@
 -- Variables
 local stateManager = {}
-stateManager.STATES = { MENU = "Menu", GAMEPLAY = "Gameplay" }
+stateManager.STATES = { MENU = "Menu", GAMEPLAY = "Gameplay", PLAY_MENU = "PlayMenu" }
 stateManager.CurrentState = nil
+stateManager.SoundCarryOver = nil
 
 local coreModule = require(script:FindFirstAncestor("Core"))
 local tweenService = game:GetService("TweenService")
@@ -20,7 +21,18 @@ function stateManager.ChangeState(newStateName: string)
 	-- In with the new, out with the old.
 	local newStateModule = require(script:FindFirstChild(newStateName))
 	local currentStateModule = stateManager.CurrentState and require(script:FindFirstChild(stateManager.CurrentState))
-	stateManager._TransitionBetweenStateMusic(newStateName, stateManager.CurrentState)
+
+	-- I hate music.
+	local oldMusicName = stateManager.CurrentState == stateManager.STATES.PLAY_MENU and stateManager.STATES.MENU or stateManager.CurrentState
+	local newMusicName = newStateName == stateManager.STATES.PLAY_MENU and stateManager.STATES.MENU or newStateName
+
+	if oldMusicName ~= newMusicName then
+		stateManager._TransitionBetweenStateMusic(
+			newStateName == stateManager.STATES.PLAY_MENU and stateManager.STATES.MENU or newStateName,
+			stateManager.CurrentState == stateManager.STATES.PLAY_MENU and stateManager.STATES.MENU or stateManager.CurrentState
+		)
+	end
+
 	stateManager.CurrentState = newStateName
 
 	if currentStateModule then
