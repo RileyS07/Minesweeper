@@ -16,7 +16,10 @@ local coreModule = require(script:FindFirstAncestor("Core"))
 local stateManager = require(coreModule.GetObject("Modules.StateManager"))
 local difficulities = require(coreModule.GetObject("/Difficulties"))
 local Grid = require(coreModule.GetObject("Libraries.Grid"))
+local Cell = require(coreModule.GetObject("Libraries.Grid.Cell"))
+
 local tweenService = game:GetService("TweenService")
+local userInputService = game:GetService("UserInputService")
 
 -- State Methods
 function gameplayState.StateStarted()
@@ -37,6 +40,7 @@ function gameplayState.StateStarted()
 			-- Setup.
 			gameplayState.SetupTimer()
 			gameplayState.SetupFlagCounter()
+			gameplayState.SetupActionTypeSwitcher()
 			gameplayState.Interface.Container.Content.UIGridLayout.CellSize = UDim2.fromScale(1 / gameplayState.DifficultyInformation.GRID_SIZE.X, 1 / gameplayState.DifficultyInformation.GRID_SIZE.Y)
 			gameplayState.Interface.Container.UIAspectRatioConstraint.AspectRatio = gameplayState.DifficultyInformation.GRID_SIZE.X / gameplayState.DifficultyInformation.GRID_SIZE.Y
 			gameplayState.Grid:GenerateGui(gameplayState.Interface.Container.Content)
@@ -49,37 +53,7 @@ function gameplayState.StateStarted()
 			correctSound:Play()
 
 			-- Let's show them game finished menu!
-			tweenService:Create(gameplayState.Interface.Overlay, TweenInfo.new(0.25, Enum.EasingStyle.Linear), {BackgroundTransparency = 0.55}):Play()
-
-			local gameFinishedMenu = gameplayState.Interface.GameFinishedMenu
-			gameFinishedMenu.StatusText.Text = finishedSuccessfully and "You've won!" or "You've lost!"
-			gameFinishedMenu.Position = UDim2.fromScale(0.5, 2)
-			gameFinishedMenu.Visible = true
-
-			local upwardsTweenInstance = tweenService:Create(gameFinishedMenu, TweenInfo.new(0.25, Enum.EasingStyle.Linear), {Position = UDim2.fromScale(0.5, 0.5)})
-			upwardsTweenInstance:Play()
-			upwardsTweenInstance.Completed:Wait()
-
-			-- Let's wait for input.
-			local desiredAction = ""
-
-			gameplayState.Connections.Button1 = gameFinishedMenu.Content.Retry.Activated:Connect(function()
-				desiredAction = gameplayState.STATES.RETRY
-				coreModule.GetObject("//Assets.Sounds.SoundEffects.Click"):Play()
-			end)
-
-			gameplayState.Connections.Button2 = gameFinishedMenu.Content.NewGame.Activated:Connect(function()
-				desiredAction = gameplayState.STATES.PLAY_AGAIN
-				coreModule.GetObject("//Assets.Sounds.SoundEffects.Click"):Play()
-			end)
-
-			gameplayState.Connections.Button3 = gameFinishedMenu.Content.Return.Activated:Connect(function()
-				desiredAction = gameplayState.STATES.GO_TO_MENU
-				coreModule.GetObject("//Assets.Sounds.SoundEffects.Click"):Play()
-			end)
-
-			-- We need to wait till they've given us input.
-			repeat task.wait() until desiredAction ~= ""
+			local desiredAction = gameplayState.GetDesiredActionOnGameFinish(finishedSuccessfully)
 
 			-- Now what do we do?
 			if desiredAction == gameplayState.STATES.PLAY_AGAIN then
@@ -134,6 +108,65 @@ function gameplayState.SetupFlagCounter()
 	end)
 
 	gameplayState.Interface.Container.Header.Counter_Flag.Text = "🚩 " .. tostring(gameplayState.Grid.BombCount)
+end
+
+
+function gameplayState.SetupActionTypeSwitcher()
+	local modeFlag = gameplayState.Interface.Container.Header.ActivationTypeSwitcher.Mode_Flag
+	local modeMine = gameplayState.Interface.Container.Header.ActivationTypeSwitcher.Mode_Mine
+
+	modeFlag.Activated:Connect(function()
+		if not gameplayState.Grid then return end
+
+		coreModule.GetObject("//Assets.Sounds.SoundEffects.Click"):Play()
+		gameplayState.Grid.ActivationType = Cell.ACTIVATION_TYPE.PLACE_FLAG
+		modeMine.LayoutOrder = 2
+		modeFlag.LayoutOrder = 1
+	end)
+
+	modeMine.Activated:Connect(function()
+		if not gameplayState.Grid then return end
+
+		coreModule.GetObject("//Assets.Sounds.SoundEffects.Click"):Play()
+		gameplayState.Grid.ActivationType = Cell.ACTIVATION_TYPE.MINE
+		modeMine.LayoutOrder = 1
+		modeFlag.LayoutOrder = 2
+	end)
+end
+
+
+function gameplayState.GetDesiredActionOnGameFinish(finishedSuccessfully: boolean)
+	tweenService:Create(gameplayState.Interface.Overlay, TweenInfo.new(0.25, Enum.EasingStyle.Linear), {BackgroundTransparency = 0.55}):Play()
+
+	local gameFinishedMenu = gameplayState.Interface.GameFinishedMenu
+	gameFinishedMenu.StatusText.Text = finishedSuccessfully and "You've won!" or "You've lost!"
+	gameFinishedMenu.Position = UDim2.fromScale(0.5, 2)
+	gameFinishedMenu.Visible = true
+
+	local upwardsTweenInstance = tweenService:Create(gameFinishedMenu, TweenInfo.new(0.25, Enum.EasingStyle.Linear), {Position = UDim2.fromScale(0.5, 0.5)})
+	upwardsTweenInstance:Play()
+	upwardsTweenInstance.Completed:Wait()
+
+	-- Let's wait for input.
+	local desiredAction = ""
+
+	gameplayState.Connections.Button1 = gameFinishedMenu.Content.Retry.Activated:Connect(function()
+		desiredAction = gameplayState.STATES.RETRY
+		coreModule.GetObject("//Assets.Sounds.SoundEffects.Click"):Play()
+	end)
+
+	gameplayState.Connections.Button2 = gameFinishedMenu.Content.NewGame.Activated:Connect(function()
+		desiredAction = gameplayState.STATES.PLAY_AGAIN
+		coreModule.GetObject("//Assets.Sounds.SoundEffects.Click"):Play()
+	end)
+
+	gameplayState.Connections.Button3 = gameFinishedMenu.Content.Return.Activated:Connect(function()
+		desiredAction = gameplayState.STATES.GO_TO_MENU
+		coreModule.GetObject("//Assets.Sounds.SoundEffects.Click"):Play()
+	end)
+
+	repeat task.wait() until desiredAction ~= ""
+	return desiredAction
 end
 
 --

@@ -11,6 +11,7 @@ function Grid.new(gridDimensions: Vector2, bombCount: number, randomSeed: number
 
 	-- Creating the new object.
 	local self = setmetatable({
+		ActivationType = Cell.ACTIVATION_TYPE.MINE,
 		BombCount = bombCount,
 		Dimensions = gridDimensions,
 		FlagCount = 0,

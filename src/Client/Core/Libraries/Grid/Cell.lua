@@ -24,6 +24,10 @@ Cell.COLOR_SCHEMES = {
 	}
 }
 
+Cell.ACTIVATION_TYPE = {
+	MINE = "Mine", PLACE_FLAG = "Place_Flag"
+}
+
 local coreModule = require(script:FindFirstAncestor("Core"))
 
 -- Constructor
@@ -91,30 +95,56 @@ function Cell:GenerateGui(parent: Instance?) : TextButton
 	textButton.LayoutOrder = currentCellValue
 	textButton.TextScaled = true
 	textButton.Text = ""
+
+	local uiPadding = Instance.new("UIPadding")
+	uiPadding.PaddingBottom = UDim.new(0.1, 0)
+	uiPadding.PaddingLeft = UDim.new(0.1, 0)
+	uiPadding.PaddingRight = UDim.new(0.1, 0)
+	uiPadding.PaddingTop = UDim.new(0.1, 0)
+	uiPadding.Parent = textButton
 	self._TextButton = textButton
 
 	-- For when they click it.
 	textButton.Activated:Connect(function()
 		if self.IsRevealed then return end
-		if self.IsFlagged then return end
+		if self.Grid.ActivationType == Cell.ACTIVATION_TYPE.MINE and self.IsFlagged then return end
 		if self.Grid.IsLocked then return end
 
-		-- We only check for Empty specifically.
-		if self:Is(Cell.CELL_TYPES.EMPTY) then
-			self.Grid:FillEmptyCells(self)
-		else
-			self:Reveal()
-		end
+		if self.Grid.ActivationType == Cell.ACTIVATION_TYPE.MINE then
 
-		coreModule.GetObject("//Assets.Sounds.SoundEffects.Click"):Play()
-		self.Grid.CellMined:Fire(self.CellType)
+			-- We only check for Empty specifically.
+			if self:Is(Cell.CELL_TYPES.EMPTY) then
+				self.Grid:FillEmptyCells(self)
+			else
+				self:Reveal()
+			end
+
+			coreModule.GetObject("//Assets.Sounds.SoundEffects.Click"):Play()
+			self.Grid.CellMined:Fire(self.CellType)
+
+		else
+			-- Inverting, removing the flag.
+			if self.IsFlagged then
+				coreModule.GetObject("//Assets.Sounds.SoundEffects.Unflag"):Play()
+				textButton.Text = ""
+			end
+
+			-- Now we need to check if it was successfully placed.
+			local wasSuccessful = self.Grid:PlaceFlagOnCell(self)
+
+			-- Update
+			if wasSuccessful then
+				coreModule.GetObject("//Assets.Sounds.SoundEffects.Flag"):Play()
+				textButton.Text = Cell.CELL_TYPES.FLAG.Symbol
+			end
+		end
 	end)
 
 	-- Right click to place a flag.
 	textButton.MouseButton2Click:Connect(function()
 		if self.IsRevealed then return end
 		if self.Grid.IsLocked then return end
-		
+
 		-- Inverting, removing the flag.
 		if self.IsFlagged then
 			coreModule.GetObject("//Assets.Sounds.SoundEffects.Unflag"):Play()
