@@ -2,7 +2,6 @@
 local stateManager = {}
 stateManager.STATES = { MENU = "Menu", GAMEPLAY = "Gameplay", PLAY_MENU = "PlayMenu" }
 stateManager.CurrentState = nil
-stateManager.SoundCarryOver = nil
 
 local coreModule = require(script:FindFirstAncestor("Core"))
 local tweenService = game:GetService("TweenService")
@@ -23,13 +22,13 @@ function stateManager.ChangeState(newStateName: string)
 	local currentStateModule = stateManager.CurrentState and require(script:FindFirstChild(stateManager.CurrentState))
 
 	-- I hate music.
-	local oldMusicName = stateManager.CurrentState == stateManager.STATES.PLAY_MENU and stateManager.STATES.MENU or stateManager.CurrentState
-	local newMusicName = newStateName == stateManager.STATES.PLAY_MENU and stateManager.STATES.MENU or newStateName
+	--local oldMusicName = stateManager.CurrentState == stateManager.STATES.PLAY_MENU and stateManager.STATES.MENU or stateManager.CurrentState
+	--local newMusicName = newStateName == stateManager.STATES.PLAY_MENU and stateManager.STATES.MENU or newStateName
 
-	if oldMusicName ~= newMusicName then
+	if not stateManager.CurrentState or (not stateManager.CurrentState:match("Menu") or not newStateName:match("Menu")) then
 		stateManager._TransitionBetweenStateMusic(
-			newStateName == stateManager.STATES.PLAY_MENU and stateManager.STATES.MENU or newStateName,
-			stateManager.CurrentState == stateManager.STATES.PLAY_MENU and stateManager.STATES.MENU or stateManager.CurrentState
+			newStateName,
+			stateManager.CurrentState
 		)
 	end
 
@@ -46,8 +45,8 @@ end
 
 -- Private Methods
 function stateManager._TransitionBetweenStateMusic(newStateName: string, oldStateName: string?)
-	local oldSoundInstance = oldStateName and coreModule.GetObject("//Assets.Sounds.Music"):FindFirstChild(oldStateName)
-	local newSoundInstance = coreModule.GetObject("//Assets.Sounds.Music"):FindFirstChild(newStateName)
+	local oldSoundInstance = oldStateName and coreModule.GetObject("//Assets.Sounds.Music"):FindFirstChild(oldStateName:match("Menu") and "Menu" or oldStateName)
+	local newSoundInstance = newStateName and coreModule.GetObject("//Assets.Sounds.Music"):FindFirstChild(newStateName:match("Menu") and "Menu" or newStateName)
 
 	task.defer(function()
 
