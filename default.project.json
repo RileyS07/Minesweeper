@@ -1,6 +1,6 @@
 
 {
-    "name": "Minesweeper",
+    "name": "Framework",
     "tree": {
         "$className": "DataModel",
         "$ignoreUnknownInstances": true,

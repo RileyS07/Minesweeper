@@ -19,7 +19,6 @@ local Grid = require(coreModule.GetObject("Libraries.Grid"))
 local Cell = require(coreModule.GetObject("Libraries.Grid.Cell"))
 
 local tweenService = game:GetService("TweenService")
-local userInputService = game:GetService("UserInputService")
 
 -- State Methods
 function gameplayState.StateStarted()
@@ -165,7 +164,10 @@ function gameplayState.GetDesiredActionOnGameFinish(finishedSuccessfully: boolea
 		coreModule.GetObject("//Assets.Sounds.SoundEffects.Click"):Play()
 	end)
 
-	repeat task.wait() until desiredAction ~= ""
+	repeat
+		task.wait()
+	until desiredAction ~= ""
+
 	return desiredAction
 end
 
